@@ -208,9 +208,9 @@ function home(){view=null;role=null;if(peer)try{peer.destroy()}catch(e){}
  $('#jn').onclick=()=>{nm();const c=$('#rc').value.trim();if(c.length!==4)return toast('Enter the 4-letter room code.');joinGame(c)}}
 function copyLink(){const u=location.origin+location.pathname+'?room='+view.room;
  (navigator.clipboard?navigator.clipboard.writeText(u):Promise.reject()).then(()=>toast('Invite link copied'),()=>prompt('Copy this link:',u))}
-function shell(){$('#app').innerHTML=`<div class="wrap"><aside id="side"><div class="pan"><h2>Members</h2><ul class="mem" id="mem"></ul><button onclick="leaveRoom()">Leave room</button></div>
- <div class="pan"><h2>Chat</h2><div id="msgs" aria-live="polite"></div>
- <div class="row"><input id="cin" maxlength="200" placeholder="Message everyone" autocomplete="off" enterkeyhint="send"><button id="csend" style="flex:none">Send</button></div></div></aside><div id="main"></div></div>`;
+function shell(){$('#app').innerHTML=`<div class="wrap"><aside id="side"><div class="pan"><h2>Chat</h2><div id="msgs" aria-live="polite"></div>
+ <div class="row"><input id="cin" maxlength="200" placeholder="Message everyone" autocomplete="off" enterkeyhint="send"><button id="csend" style="flex:none">Send</button></div></div>
+ <div class="pan"><h2>Members</h2><ul class="mem" id="mem"></ul><button onclick="leaveRoom()">Leave room</button></div></aside><div id="main"></div></div>`;
  const send=()=>{const i=$('#cin'),x=i.value.trim();if(x){act({t:'chat',x});i.value=''}};
  $('#csend').onclick=send;$('#cin').onkeydown=e=>{if(e.key==='Enter')send()};lastChat=0;keepAwake()}
 function keepAwake(){try{navigator.wakeLock&&navigator.wakeLock.request('screen').catch(()=>{})}catch(e){}}
