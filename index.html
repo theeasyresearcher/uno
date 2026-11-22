@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#1b2a2f">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="FCS UNO">
+<title>BPHC FCS’ UNO</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@400;600;800&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/peerjs@1.5.4/dist/peerjs.min.js"></script>
+<style>
+:root{--bg:#1b2a2f;--panel:#243a40;--ink:#f3efe6;--mute:#9db3b8;--r:#d6453d;--y:#e6b422;--g:#3a9b5c;--b:#3a6fc4;--wild:conic-gradient(var(--r) 0 25%,var(--y) 0 50%,var(--g) 0 75%,var(--b) 0)}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;min-height:100%;-webkit-text-size-adjust:100%;overscroll-behavior-y:none;background:var(--bg);color:var(--ink);font-family:'Bricolage Grotesque',system-ui,-apple-system,Segoe UI,sans-serif}
+body{padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left)}
+#app{max-width:1000px;margin:0 auto;padding:16px;min-height:100vh;min-height:100dvh;display:flex;flex-direction:column;gap:16px}
+h1{font-size:44px;line-height:1;margin:24px 0 4px;font-weight:800}
+h2{margin:0 0 8px}
+p{margin:6px 0;color:var(--mute)}
+.pan{background:var(--panel);border-radius:14px;padding:18px;display:flex;flex-direction:column;gap:12px}
+input{font:inherit;font-size:16px;padding:12px;border-radius:10px;border:2px solid #3b565d;background:#14211f;color:var(--ink);width:100%}
+input:focus,button:focus-visible,.card:focus-visible{outline:3px solid var(--y);outline-offset:2px}
+button{font:inherit;font-weight:600;min-height:44px;touch-action:manipulation;padding:12px 16px;border-radius:10px;border:0;background:#3b565d;color:var(--ink);cursor:pointer}
+button.go{background:var(--y);color:#241c00}
+button:disabled{opacity:.4;cursor:not-allowed}
+.row{display:flex;gap:10px}.row>*{flex:1}
+.code{font-size:36px;letter-spacing:6px;color:var(--ink);font-weight:800}
+.wrap{display:grid;grid-template-columns:260px 1fr;gap:16px;align-items:start}
+#main{display:flex;flex-direction:column;gap:16px;min-width:0}
+#side{display:flex;flex-direction:column;gap:16px;position:sticky;top:12px}
+.mem{list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:6px}
+.mem li{display:flex;justify-content:space-between;gap:8px;padding:8px 10px;border-radius:8px;background:#1b2a2f;border:2px solid transparent}
+.mem li.turn{border-color:var(--y)}
+#msgs{height:220px;overflow-y:auto;font-size:14px;display:flex;flex-direction:column;gap:6px;padding:4px;word-break:break-word}
+#msgs b{color:var(--y)}
+.table{background:var(--panel);border-radius:14px;padding:18px;display:flex;align-items:center;justify-content:center;gap:24px}
+.status{text-align:center;font-weight:600;min-height:24px}
+.log{text-align:center;font-size:13px;color:var(--mute);min-height:34px}
+.card{touch-action:manipulation;width:64px;height:96px;flex:none;border-radius:10px;background:var(--c);border:3px solid #fffd;color:#fff;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:26px;text-shadow:0 1px 2px #0006;user-select:none}
+.card.r{--c:var(--r)}.card.y{--c:var(--y)}.card.g{--c:var(--g)}.card.b{--c:var(--b)}.card.w{background:var(--wild)}
+.card.back{background:#111;color:var(--y);font-size:15px;cursor:pointer}
+.card.big{width:84px;height:126px;font-size:34px}
+.hand{display:flex;gap:8px;overflow-x:auto;-webkit-overflow-scrolling:touch;padding:18px 4px 10px;align-items:flex-end}
+.hand .card:first-child{margin-left:auto}.hand .card:last-child{margin-right:auto}
+.hand .card{cursor:pointer;transition:transform .12s}
+.hand .card.ok{transform:translateY(-8px)}
+.hand .card.no{opacity:.45;cursor:default}
+.colordot{display:inline-block;width:14px;height:14px;border-radius:50%;background:var(--c);vertical-align:-2px;margin:0 4px;border:2px solid #fff}
+.modal{position:fixed;inset:0;padding:16px;background:#000b;display:flex;align-items:center;justify-content:center;z-index:5}
+.modal .pan{align-items:center;text-align:center}
+.picks{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.picks button{width:90px;height:60px;background:var(--c);border:3px solid #fff}
+#toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom));max-width:90vw;transform:translateX(-50%);background:#000d;padding:10px 16px;border-radius:10px;display:none;z-index:9}
+.strip{display:none;gap:6px;overflow-x:auto}
+.chip{flex:none;padding:6px 10px;border-radius:999px;background:var(--panel);border:2px solid transparent;font-size:14px}
+.chip.turn{border-color:var(--y)}
+@media (max-width:760px){
+ #app{padding:12px;gap:12px}h1{font-size:32px;margin:12px 0 2px}
+ .wrap{grid-template-columns:1fr;gap:12px}#side{order:2;position:static}#msgs{height:180px}
+ .strip{display:flex}.table{padding:12px;gap:16px}.code{font-size:30px}
+ .hand .card{width:58px;height:88px;font-size:22px}
+}
+@media (max-height:500px){h1{font-size:26px;margin:6px 0}.card.big{width:60px;height:90px;font-size:26px}.table{padding:8px}}
+#banner{display:none;position:fixed;top:env(safe-area-inset-top);left:0;right:0;background:var(--y);color:#241c00;text-align:center;padding:8px;font-weight:600;z-index:20}
+@media (prefers-reduced-motion:reduce){.hand .card{transition:none}}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<div id="banner" role="status">Reconnecting…</div>
+<div id="toast" role="status"></div>
+<script>
+const COLS=['r','y','g','b'],CN={r:'Red',y:'Yellow',g:'Green',b:'Blue'};
+const $=s=>document.querySelector(s);
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const lbl=v=>({S:'⊘',R:'⇄',D:'+2',W:'W',F:'+4'}[v]||v);
+const shuffle=a=>{for(let i=a.length-1;i>0;i--){const j=Math.random()*(i+1)|0;[a[i],a[j]]=[a[j],a[i]]}return a};
+const toast=m=>{const t=$('#toast');t.textContent=m;t.style.display='block';clearTimeout(t._h);t._h=setTimeout(()=>t.style.display='none',3500)};
+
+let snap=null,myPid=rid(),lastMsg=0,lostSince=0,busy=false,wasMine=false,lastChat=0,peer,role,myName=(()=>{try{return localStorage.getItem('uno-name')||''}catch(e){return ''}})(),hostConn,view=null,room='',pending=null,G=null;
+
+/* ---------- HOST: authoritative game state ---------- */
+function mkDeck(){const d=[];for(const c of COLS){d.push({c,v:'0'});for(let n=1;n<=9;n++)d.push({c,v:''+n},{c,v:''+n});for(const s of['S','R','D'])d.push({c,v:s},{c,v:s})}
+ for(let i=0;i<4;i++)d.push({c:'w',v:'W'},{c:'w',v:'F'});return shuffle(d)}
+const mod=(a,n)=>((a%n)+n)%n;
+const glog=m=>{G.log.push(m);G.log=G.log.slice(-3)};
+function draw(p,n){const P=G.players[p];for(let i=0;i<n;i++){
+ if(!G.deck.length){const t=G.discard.pop();G.deck=shuffle(G.discard);G.discard=[t]}
+ if(!G.deck.length)break;P.hand.push(G.deck.pop())}}
+const topCard=()=>G.discard[G.discard.length-1];
+const canPlay=c=>c.c==='w'||c.c===G.color||c.v===topCard().v;
+const adv=k=>{G.turn=mod(G.turn+G.dir*k,G.players.length)};
+function start(){G.deck=mkDeck();G.discard=[];G.log=[];G.winner=null;G.dir=1;G.turn=0;G.drew=false;
+ G.players.forEach(p=>p.hand=[]);G.players.forEach((_,i)=>draw(i,7));
+ let c;do{c=G.deck.pop();if(!/^\d$/.test(c.v)){G.deck.unshift(c);c=null}}while(!c);
+ G.discard.push(c);G.color=c.c;G.started=true;glog('Game on!')}
+function play(p,i,col){const P=G.players[p],c=P.hand[i];
+ if(!c||!canPlay(c)||(c.c==='w'&&!COLS.includes(col)))return;
+ P.hand.splice(i,1);G.discard.push(c);G.color=c.c==='w'?col:c.c;G.drew=false;
+ const n=G.players.length,vi=mod(G.turn+G.dir,n),V=G.players[vi];let k=1;
+ glog(`${P.name} played ${c.c==='w'?'wild '+CN[col]:CN[c.c]+' '+lbl(c.v)}`);
+ if(c.v==='S'){k=2}
+ else if(c.v==='R'){if(n===2)k=2;else G.dir*=-1}
+ else if(c.v==='D'){draw(vi,2);k=2;glog(`${V.name} draws 2`)}
+ else if(c.v==='F'){draw(vi,4);k=2;glog(`${V.name} draws 4`)}
+ if(!P.hand.length){G.winner=p;return}
+ if(P.hand.length===1)glog(`${P.name}: UNO!`);
+ adv(k)}
+function rid(){return Math.random().toString(36).slice(2,10)}
+const store={get(k){try{return localStorage.getItem(k)}catch(e){return null}},set(k,v){try{localStorage.setItem(k,v)}catch(e){}},del(k){try{localStorage.removeItem(k)}catch(e){}}};
+const banner=on=>{const b=$('#banner');if(b)b.style.display=on?'block':'none'};
+function hact(p,m){
+ if(m.t==='chat'){const x=String(m.x||'').trim().slice(0,200);if(x){G.chat.push({n:G.players[p].name,x});G.chat=G.chat.slice(-50)}bc();return}
+ if(m.t==='start'){if(G.players[p].pid===G.host&&(!G.started||G.winner!==null)&&G.players.length>1)start()}
+ else if(G.started&&G.winner===null&&G.turn===p){
+  if(m.t==='play')play(p,m.i|0,m.col);
+  else if(m.t==='draw'&&!G.drew){draw(p,1);const h=G.players[p].hand;
+   if(canPlay(h[h.length-1]||{c:'x',v:'x'}))G.drew=true;else{glog(`${G.players[p].name} drew and passed`);adv(1)}}
+  else if(m.t==='pass'&&G.drew){G.drew=false;adv(1)}}
+ bc()}
+/* The full game state is copied to every member, so any member can take over as host. */
+function ser(){return {room:G.room,host:G.host,started:G.started,winner:G.winner,log:G.log,chat:G.chat,deck:G.deck||[],discard:G.discard||[],color:G.color,dir:G.dir,turn:G.turn,drew:G.drew,
+ players:G.players.map(p=>({pid:p.pid,name:p.name,hand:p.hand,on:p.on}))}}
+function bc(){const S=ser();G.players.forEach(P=>{if(P.conn&&P.conn.open)P.conn.send({t:'state',S})});setSnap(S)}
+function setSnap(S){snap=S;save();render()}
+function save(){if(snap)store.set('uno-sess',JSON.stringify({room,pid:myPid,name:myName,snap,ts:Date.now()}))}
+function mkView(S){const you=S.players.findIndex(p=>p.pid===myPid),m=S.players[you];
+ return {room:S.room,started:S.started,you,hostIdx:S.players.findIndex(p=>p.pid===S.host),
+  players:S.players.map(x=>({name:x.name,n:x.hand.length,on:x.on!==false})),hand:m?m.hand:[],
+  top:S.started?S.discard[S.discard.length-1]:null,color:S.color,turn:S.turn,drew:S.drew,winner:S.winner,log:S.log,dir:S.dir,chat:S.chat}}
+const me=()=>G.players.findIndex(p=>p.pid===myPid);
+function drop(c){const i=G.players.findIndex(p=>p.conn===c);if(i<0)return;const P=G.players[i];
+ if(!G.started){G.players.splice(i,1);G.turn=0}
+ else{P.conn=null;P.on=false;P.off=Date.now();glog(`${P.name} went offline`)}
+ bc()}
+function code(){const a='ABCDEFGHJKLMNPQRSTUVWXYZ';return Array.from({length:4},()=>a[Math.random()*a.length|0]).join('')}
+function hostGame(){becomeHost(code(),null)}
+function becomeHost(rc,S,onFail){
+ if(peer)try{peer.destroy()}catch(e){}
+ room=rc;let opened=false;const pr=peer=new Peer('unoz-'+rc);
+ pr.on('open',()=>{opened=true;role='h';hostConn=null;busy=false;lostSince=0;banner(false);
+  G=S?{...S,players:S.players.map(p=>({pid:p.pid,name:p.name,hand:p.hand,conn:null,on:p.pid===myPid,off:Date.now()})),host:myPid}
+     :{room:rc,host:myPid,players:[{pid:myPid,name:myName,hand:[],conn:null,on:true}],started:false,winner:null,log:[],chat:[],deck:[],discard:[],dir:1,turn:0,drew:false};
+  if(S)glog(`${myName} is now the host`);bc()});
+ pr.on('disconnected',()=>{if(opened&&!pr.destroyed)setTimeout(()=>{try{pr.reconnect()}catch(e){}},1500)});
+ pr.on('error',e=>{
+  if(!opened){if(S){onFail&&onFail()}else if(e.type==='unavailable-id')becomeHost(code(),null);else toast('Connection problem: '+e.type);return}
+  if(e.type==='unavailable-id'){snap=ser();G=null;role='c';lost()}});
+ pr.on('connection',c=>{c.on('data',m=>hmsg(c,m));c.on('close',()=>drop(c))})}
+function hmsg(c,m){if(!G)return;
+ if(m.t==='join'){
+  const P=G.players.find(x=>x.pid===m.pid);
+  if(P){const old=P.conn;P.conn=c;P.on=true;if(old&&old!==c)try{old.close()}catch(e){}}
+  else if(G.started){c.send({t:'err',msg:'That game has already started.'});return}
+  else if(G.players.length>=8){c.send({t:'err',msg:'The room is full.'});return}
+  else G.players.push({pid:m.pid,name:String(m.name||'Member').slice(0,16),hand:[],conn:c,on:true});
+  bc();return}
+ const i=G.players.findIndex(p=>p.conn===c);if(i>=0)hact(i,m)}
+setInterval(()=>{if(role!=='h'||!G)return;
+ G.players.forEach(P=>P.conn&&P.conn.open&&P.conn.send({t:'ping'}));
+ if(G.started&&G.winner===null){const P=G.players[G.turn];
+  if(P&&!P.on&&Date.now()-P.off>15000){glog(`${P.name} is offline, turn skipped`);G.drew=false;adv(1);bc()}}},5000);
+
+/* ---------- CLIENT ---------- */
+function connectHost(ok,fail){
+ if(peer)try{peer.destroy()}catch(e){}
+ const pr=peer=new Peer();let fin=false;
+ const bad=()=>{if(fin)return;fin=true;try{pr.destroy()}catch(e){}fail&&fail()};
+ pr.on('error',bad);
+ pr.on('open',()=>{const c=hostConn=pr.connect('unoz-'+room,{reliable:true});const to=setTimeout(bad,8000);
+  c.on('open',()=>{if(fin)return;fin=true;clearTimeout(to);role='c';lastMsg=Date.now();busy=false;lostSince=0;banner(false);
+   c.send({t:'join',pid:myPid,name:myName});ok&&ok()});
+  c.on('data',m=>{lastMsg=Date.now();if(m.t==='state')setSnap(m.S);else if(m.t==='err')leave(m.msg)});
+  c.on('close',()=>{if(hostConn===c&&role==='c'&&fin)lost()})})}
+function joinGame(rc){room=rc.toUpperCase().trim();snap=null;role='c';busy=true;lostSince=0;
+ connectHost(null,()=>leave('No game found with that code.'))}
+/* Connection lost: keep retrying; if the host is gone, the first remaining member takes over as host. */
+function lost(){if(busy||role==='h')return;busy=true;lostSince=lostSince||Date.now();banner(true);loopStep()}
+function loopStep(){if(role==='h'){busy=false;return}
+ const el=(Date.now()-lostSince)/1000,S=snap,cands=S?S.players.filter(p=>p.pid!==S.host).map(p=>p.pid):[],r=cands.indexOf(myPid);
+ if(S&&r>=0&&el>6+r*5){becomeHost(room,S,()=>setTimeout(loopStep,1500));return}
+ if(el>150){leave('Could not reconnect to the game.');return}
+ connectHost(null,()=>setTimeout(loopStep,2000))}
+function resume(s){myPid=s.pid;myName=s.name;room=s.room;snap=s.snap;role='c';lostSince=Date.now();busy=true;banner(true);render();
+ if(snap.host===myPid)becomeHost(room,snap,()=>{busy=false;lost()});else loopStep()}
+function leave(msg){role=null;snap=null;view=null;G=null;busy=false;lostSince=0;store.del('uno-sess');banner(false);if(msg)toast(msg);home()}
+function leaveRoom(){if(confirm('Leave this room?'))leave()}
+function act(m){if(role==='h')hact(me(),m);else if(hostConn&&hostConn.open)hostConn.send(m);else toast('Reconnecting… try again in a moment.')}
+setInterval(()=>{if(role==='c'&&snap&&!busy&&Date.now()-lastMsg>15000)lost()},3000);
+
+/* ---------- UI ---------- */
+function home(){view=null;role=null;if(peer)try{peer.destroy()}catch(e){}
+ let sess=null;try{sess=JSON.parse(store.get('uno-sess')||'null')}catch(e){}
+ if(sess&&(!sess.snap||Date.now()-sess.ts>216e5))sess=null;
+ const q=new URLSearchParams(location.search).get('room')||'';
+ $('#app').innerHTML=`<h1>BPHC FCS’ UNO</h1><p>UNO with friends, no sign-up. One member creates a room; everyone else joins with the 4-letter code.</p>
+ ${sess?`<div class="pan"><p>You were in room <b>${esc(sess.room)}</b>.</p><button class="go" id="rj">Rejoin room ${esc(sess.room)}</button></div>`:''}
+ <div class="pan"><label for="nm">Your name</label><input id="nm" maxlength="16" value="${esc(myName)}" autocomplete="nickname">
+ <button class="go" id="mk">Create a room</button></div>
+ <div class="pan"><label for="rc">Room code</label><input id="rc" maxlength="4" value="${esc(q)}" autocapitalize="characters" placeholder="ABCD"><button id="jn">Join room</button></div>`;
+ const nm=()=>{myName=($('#nm').value.trim()||'Member');try{localStorage.setItem('uno-name',myName)}catch(e){}};
+ $('#mk').onclick=()=>{nm();hostGame()};
+ if(sess)$('#rj').onclick=()=>resume(sess);
+ $('#jn').onclick=()=>{nm();const c=$('#rc').value.trim();if(c.length!==4)return toast('Enter the 4-letter room code.');joinGame(c)}}
+function copyLink(){const u=location.origin+location.pathname+'?room='+view.room;
+ (navigator.clipboard?navigator.clipboard.writeText(u):Promise.reject()).then(()=>toast('Invite link copied'),()=>prompt('Copy this link:',u))}
+function shell(){$('#app').innerHTML=`<div class="wrap"><aside id="side"><div class="pan"><h2>Members</h2><ul class="mem" id="mem"></ul><button onclick="leaveRoom()">Leave room</button></div>
+ <div class="pan"><h2>Chat</h2><div id="msgs" aria-live="polite"></div>
+ <div class="row"><input id="cin" maxlength="200" placeholder="Message everyone" autocomplete="off" enterkeyhint="send"><button id="csend" style="flex:none">Send</button></div></div></aside><div id="main"></div></div>`;
+ const send=()=>{const i=$('#cin'),x=i.value.trim();if(x){act({t:'chat',x});i.value=''}};
+ $('#csend').onclick=send;$('#cin').onkeydown=e=>{if(e.key==='Enter')send()};lastChat=0;keepAwake()}
+function keepAwake(){try{navigator.wakeLock&&navigator.wakeLock.request('screen').catch(()=>{})}catch(e){}}
+document.addEventListener('visibilitychange',()=>{if(document.visibilityState!=='visible'||!snap)return;keepAwake();
+ if(role==='h'&&peer&&peer.disconnected&&!peer.destroyed)try{peer.reconnect()}catch(e){}
+ else if(role==='c'&&!busy&&(!hostConn||!hostConn.open))lost()});
+function render(){if(!snap)return;const v=view=mkView(snap);
+ if(!$('#main'))shell();
+ const mineNow=v.started&&v.winner===null&&v.turn===v.you;
+ if(mineNow&&!wasMine&&navigator.vibrate)try{navigator.vibrate(150)}catch(e){}
+ wasMine=mineNow;
+ $('#mem').innerHTML=v.players.map((p,i)=>`<li class="${v.started&&v.turn===i&&v.winner===null?'turn':''}"><span>${esc(p.name)}${i===v.hostIdx?' (host)':''}${i===v.you?' (you)':''}${p.on?'':' (offline)'}</span>${v.started?`<b>${p.n}</b>`:''}</li>`).join('');
+ const M=$('#msgs'),st=M.scrollTop,near=M.scrollHeight-M.scrollTop-M.clientHeight<40;
+ M.innerHTML=v.chat.map(c=>`<div><b>${esc(c.n)}:</b> ${esc(c.x)}</div>`).join('')||'<p>No messages yet.</p>';
+ M.scrollTop=(near||v.chat.length!==lastChat)?M.scrollHeight:st;lastChat=v.chat.length;
+ const h0=$('.hand'),hs=h0?h0.scrollLeft:0;
+ $('#main').innerHTML=v.started?gameH(v):lobbyH(v);
+ const h1=$('.hand');if(h1)h1.scrollLeft=hs}
+function lobbyH(v){return `<div class="pan"><h2>Waiting room</h2><p>Room code</p><div class="code">${v.room}</div>
+ <button onclick="copyLink()">Copy invite link</button>
+ ${role==='h'?`<button class="go" onclick="act({t:'start'})" ${v.players.length<2?'disabled':''}>Start game</button>${v.players.length<2?'<p>Waiting for at least one more member.</p>':''}`:'<p>Waiting for the host to start the game…</p>'}</div>`}
+function gameH(v){const mine=v.turn===v.you&&v.winner===null;
+ const hand=v.hand.map((c,i)=>{const ok=mine&&(c.c==='w'||c.c===v.color||c.v===v.top.v);
+  return `<div class="card ${c.c} ${mine?(ok?'ok':'no'):''}" ${ok?`tabindex="0" role="button" onclick="pick(${i})" onkeydown="if(event.key==='Enter')pick(${i})"`:''}>${lbl(c.v)}</div>`}).join('');
+ const wn=v.winner!==null?esc(v.players[v.winner]?.name||'Someone'):'';
+ const stt=v.winner!==null?`${wn} wins!`:mine?(v.drew?'You drew a playable card. Play it or pass.':'Your turn'):`${esc(v.players[v.turn].name)}’s turn`;
+ return `<div class="strip">${v.players.map((p,i)=>`<span class="chip ${v.turn===i&&v.winner===null?'turn':''}">${esc(p.name)}${p.on?'':' (offline)'} <b>${p.n}</b></span>`).join('')}</div>
+ <div class="table"><div class="card big back" ${mine&&!v.drew?`tabindex="0" role="button" onclick="act({t:'draw'})"`:''}>DRAW</div>
+  <div class="card big ${v.top.c}">${lbl(v.top.v)}</div></div>
+ <div class="status">${stt} <span style="font-weight:400;color:var(--mute)">Colour<span class="colordot" style="--c:var(--${v.color})"></span>${CN[v.color]} ${v.dir>0?'↻':'↺'}</span></div>
+ ${mine&&v.drew?`<div class="row"><button onclick="act({t:'pass'})">Pass</button></div>`:''}
+ <div class="hand">${hand}</div><div class="log">${v.log.map(esc).join('<br>')}</div>
+ ${v.winner!==null?`<div class="modal"><div class="pan"><h2>${wn} wins!</h2>${role==='h'?`<button class="go" onclick="act({t:'start'})">Play again</button>`:'<p>Waiting for the host to start another round.</p>'}</div></div>`:''}
+ ${pending!==null?`<div class="modal"><div class="pan"><h2>Pick a colour</h2><div class="picks">${COLS.map(c=>`<button style="--c:var(--${c})" aria-label="${CN[c]}" onclick="choose('${c}')"></button>`).join('')}</div><button onclick="pending=null;render()">Cancel</button></div></div>`:''}`}
+function pick(i){const c=view.hand[i];if(c.c==='w'){pending=i;render()}else act({t:'play',i})}
+function choose(col){const i=pending;pending=null;act({t:'play',i,col})}
+home();
+</script>
+</body>
+</html>
